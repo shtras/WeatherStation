@@ -11,6 +11,11 @@ add_executable(test
         main.cpp
         SevSeg.cpp
         SevSegShift.cpp
+        MultiDisplay.cpp
+        embedded-i2c-scd4x/scd4x_i2c.c
+        embedded-i2c-scd4x/sensirion_common.c
+        embedded-i2c-scd4x/sensirion_i2c_hal.c
+        embedded-i2c-scd4x/sensirion_i2c.c
         )
 
 # pull in common dependencies

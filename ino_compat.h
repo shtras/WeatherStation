@@ -7,12 +7,12 @@
 #define OUTPUT GPIO_OUT
 
 extern "C" {
-inline long micros()
+inline uint64_t micros()
 {
     return time_us_64();
 }
 
-inline long millis()
+inline uint64_t millis()
 {
     return micros() / 1000ULL;
 }

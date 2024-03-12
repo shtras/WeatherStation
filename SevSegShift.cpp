@@ -153,18 +153,16 @@ void SevSegShift::digitOff(byte digitNum)
 void SevSegShift::pushData2ShiftRegister()
 {
     // walk through the ShiftRegisterMap and push eveything to the ShiftRegister(s)
-    for (int k = 0; k < 2; ++k) {
-        for (int i = 8 * _numberOfShiftRegisters - 1; i >= 0; i--) {
-            // put the data to the data PIN of Arduino
-            digitalWrite(_pinDS, _shiftRegisterMap[i]);
-            // push it to the next Register (DS -> 0 | 0->1 | 1->2 | ...)
-            // this is done by createing a raising flank on SH_CP (ShiftPIN)
-            digitalWrite(_pinSHCP, LOW);
-            digitalWrite(_pinSHCP, HIGH);
-        }
-        digitalWrite(_pinSTCP, LOW);
-        digitalWrite(_pinSTCP, HIGH);
+    for (int i = 8 * _numberOfShiftRegisters - 1; i >= 0; i--) {
+        // put the data to the data PIN of Arduino
+        digitalWrite(_pinDS, _shiftRegisterMap[i]);
+        // push it to the next Register (DS -> 0 | 0->1 | 1->2 | ...)
+        // this is done by createing a raising flank on SH_CP (ShiftPIN)
+        digitalWrite(_pinSHCP, LOW);
+        digitalWrite(_pinSHCP, HIGH);
     }
+    digitalWrite(_pinSTCP, LOW);
+    digitalWrite(_pinSTCP, HIGH);
     // everything in position? - YES
     // now store it in the current state
     // this is done by a raising flank on the ST_CP (Store Pin)
