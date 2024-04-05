@@ -23,6 +23,7 @@ SCD::SCD()
     // Clean up potential SCD40 states
     checkError(scd4x_wake_up(), "scd4x_wake_up");
     checkError(scd4x_stop_periodic_measurement(), "scd4x_stop_periodic_measurement");
+    sleep_ms(600);
     checkError(scd4x_reinit(), "scd4x_reinit");
 
     uint16_t serial_0;
@@ -33,13 +34,18 @@ SCD::SCD()
         printf("serial: 0x%04x%04x%04x\n", serial_0, serial_1, serial_2);
     }
 
+    //uint16_t status;
+    //checkError(scd4x_perform_self_test(&status), "self_test");
+    //std::cout << "Self test status: " << status << "\n";
+
     checkError(scd4x_start_periodic_measurement(), "scd4x_start_periodic_measurement");
+    lastMeasure_ = millis() + 5000;
 }
 
 bool SCD::process()
 {
     auto now = millis();
-    if (now - lastMeasure_ < 500) {
+    if (lastMeasure_ > now || now - lastMeasure_ < 1000) {
         return false;
     }
     lastMeasure_ = now;
@@ -47,11 +53,17 @@ bool SCD::process()
     bool data_ready_flag = false;
     auto err = scd4x_get_data_ready_flag(&data_ready_flag);
     if (err == -123) {
-        std::cout << "Restart\n";
+        ++numRestarts_;
+        std::cout << "Restart " << numRestarts_ << "\n";
+        sleep_ms(100);
+        checkError(scd4x_power_down(), "power_down");
+        sleep_ms(1000);
+        checkError(scd4x_wake_up(), "scd4x_wake_up");
         checkError(scd4x_stop_periodic_measurement(), "scd4x_stop_periodic_measurement");
+        sleep_ms(600);
         checkError(scd4x_reinit(), "scd4x_reinit");
-        sleep_ms(10);
         checkError(scd4x_start_periodic_measurement(), "scd4x_start_periodic_measurement");
+        lastMeasure_ = now + 5000;
         return false;
     } else if (err != 0) {
         std::cout << "Unknown error\n";

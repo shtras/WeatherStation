@@ -14,16 +14,17 @@ namespace weather_station
 class WeatherManager
 {
 public:
-explicit WeatherManager(int dhtPin);
-    bool process();
+    explicit WeatherManager(int dhtPin);
+    uint64_t process();
 
     void display(MultiDisplay& md);
+    void switchDisplay();
 
 private:
     std::vector<std::unique_ptr<Sensor>> sensors_;
-    std::vector<Sensor::Measurement> measurements_;    
+    std::vector<Sensor::Measurement> measurements_;
+    std::vector<uint64_t> lastMeasurement_;
 
-    int displayedSensor_ = 0;
-    uint64_t lastSwitch_ = 0;
+    int displayedSensor_ = 1;
 };
 } // namespace weather_station

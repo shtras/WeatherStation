@@ -30,7 +30,7 @@ class DHT_nonblocking: public Sensor
 public:
     enum class Type { DHT_TYPE_11 = 0, DHT_TYPE_21 = 1, DHT_TYPE_22 = 2 };
     DHT_nonblocking(uint8_t pin, Type type);
-    bool process();
+    bool process() override;
 
 private:
     bool measure(float* temperature, float* humidity);

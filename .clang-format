@@ -23,7 +23,7 @@ BraceWrapping:
     SplitEmptyNamespace: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 UseTab: Never
-AlignAfterOpenBracket: DontAlign
+AlignAfterOpenBracket: BlockIndent
 ReflowComments: false
 SortIncludes: false
 ConstructorInitializerIndentWidth: 4

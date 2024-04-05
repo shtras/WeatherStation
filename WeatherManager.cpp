@@ -2,21 +2,23 @@
 #include "ino_compat.h"
 
 #include <iostream>
+#include <algorithm>
 
 namespace weather_station
 {
 WeatherManager::WeatherManager(int dhtPin)
 {
-    //sensors_.emplace_back(
-    //    std::make_unique<DHT_nonblocking>(dhtPin, DHT_nonblocking::Type::DHT_TYPE_11));
+    sensors_.emplace_back(
+        std::make_unique<DHT_nonblocking>(dhtPin, DHT_nonblocking::Type::DHT_TYPE_11)
+    );
     sensors_.emplace_back(std::make_unique<SCD>());
 
     measurements_.resize(sensors_.size());
+    lastMeasurement_.resize(sensors_.size());
 }
 
-bool WeatherManager::process()
+uint64_t WeatherManager::process()
 {
-    bool res = false;
     for (int i = 0; i < sensors_.size(); ++i) {
         auto& sensor = sensors_[i];
         if (sensor->process()) {
@@ -24,20 +26,20 @@ bool WeatherManager::process()
             std::cout << "Sensor: " << i << " CO2: " << measurements_[i].CO2
                       << " Temp: " << measurements_[i].Temperature
                       << " Humidity: " << measurements_[i].Humidity << "\n";
-            res = true;
+            if (measurements_[i].CO2 == 0) {
+                measurements_[i].CO2 = (*std::max_element(
+                                            measurements_.begin(), measurements_.end(),
+                                            [](auto& a, auto& b) { return a.CO2 < b.CO2; }
+                                        )).CO2;
+            }
+            lastMeasurement_[i] = millis();
         }
     }
-    return res;
+    return *std::min_element(lastMeasurement_.begin(), lastMeasurement_.end());
 }
 
 void WeatherManager::display(MultiDisplay& md)
 {
-    auto now = millis();
-    if (now - lastSwitch_ > 2000) {
-        lastSwitch_ = now;
-        displayedSensor_ = (displayedSensor_ + 1) % sensors_.size();
-    }
-
     const Sensor::Measurement& measurement = measurements_[displayedSensor_];
     md.setNumber(0, measurement.CO2);
     md.setNumberF(1, measurement.Temperature, 2);
@@ -46,5 +48,10 @@ void WeatherManager::display(MultiDisplay& md)
     segs[3] = 0b01011000;
     md.setSegments(1, segs);
     md.setNumberF(2, measurement.Humidity, 2);
+}
+
+void WeatherManager::switchDisplay()
+{
+    displayedSensor_ = (displayedSensor_ + 1) % sensors_.size();
 }
 } // namespace weather_station

@@ -70,7 +70,7 @@ bool DHT_nonblocking::measure(float* temperature, float* humidity)
 bool DHT_nonblocking::process()
 {
     auto now = millis();
-    if (lastMEasurement_ - now < 3000) {
+    if (now - lastMEasurement_ < 5000) {
         return false;
     }
     auto res = measure(&measurement_.Temperature, &measurement_.Humidity);
