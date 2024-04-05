@@ -1,5 +1,6 @@
 #include "WeatherManager.h"
-#include "MultiDisplay.h"
+//#include "MultiDisplay.h"
+#include "NewMultiDisplay.h"
 #include "Button.h"
 #include "ino_compat.h"
 
@@ -12,10 +13,10 @@
 
 void foo()
 {
-    MultiDisplay md(
+    weather_station::MultiDisplay md(
         11, 12, {16, 13, 19, 10}, {8 + 2, 8 + 5, 8 + 6, 2}, {8 + 3, 8 + 7, 4, 6, 7, 8 + 4, 3, 5}
     );
-    md.begin();
+    //md.begin();
 
     constexpr int dhtPin = 15;
     weather_station::WeatherManager weather(dhtPin);

@@ -72,7 +72,7 @@ MultiDisplay::MultiDisplay(Pin clockPin, Pin latchPin, const std::vector<Pin>& d
     , clockPin_(clockPin)
     , latchPin_(latchPin)
 {
-    digitCodes.resize(dataPins.size());
+    digitValues.resize(dataPins.size());
     shiftRegisterData_.resize(dataPins.size());
 }
 
@@ -197,11 +197,11 @@ void MultiDisplay::setNumber(int idx, int32_t numToShow, int8_t decPlaces, bool 
     }
 
     for (uint8_t digitNum = 0; digitNum < 4; digitNum++) {
-        digitCodes[idx][digitNum] = digitCodeMap[digits[digitNum]];
+        digitValues[idx][digitNum] = digitCodeMap[digits[digitNum]];
         // Set the decimal point segment
         if (decPlaces >= 0) {
             if (digitNum == 4 - 1 - decPlaces) {
-                digitCodes[idx][digitNum] |= digitCodeMap[PERIOD_IDX];
+                digitValues[idx][digitNum] |= digitCodeMap[PERIOD_IDX];
             }
         }
     }
@@ -223,14 +223,14 @@ void MultiDisplay::setNumberF(int idx, float numToShow, int8_t decPlaces, bool h
 void MultiDisplay::setSegments(int idx, const uint8_t segs[])
 {
     for (uint8_t digit = 0; digit < 4; digit++) {
-        digitCodes[idx][digit] = segs[digit];
+        digitValues[idx][digit] = segs[digit];
     }
 }
 
 void MultiDisplay::getSegments(int idx, uint8_t segs[])
 {
     for (uint8_t digit = 0; digit < 4; digit++) {
-        segs[digit] = digitCodes[idx][digit];
+        segs[digit] = digitValues[idx][digit];
     }
 }
 
@@ -241,7 +241,7 @@ void MultiDisplay::setChars(const char str[])
 void MultiDisplay::blank(void)
 {
     for (uint8_t digitNum = 0; digitNum < 4; digitNum++) {
-        for (auto& digitCodesArr : digitCodes) {
+        for (auto& digitCodesArr : digitValues) {
             digitCodesArr[digitNum] = digitCodeMap[BLANK_IDX];
         }
     }
@@ -254,7 +254,7 @@ void MultiDisplay::segmentOn(uint8_t segmentNum)
         auto& _shiftRegisterMap = shiftRegisterData_[i];
         _shiftRegisterMap[segmentPins_[segmentNum]] = 1;
         for (uint8_t digitNum = 0; digitNum < 4; digitNum++) {
-            if (digitCodes[i][digitNum] & (1 << segmentNum)) {
+            if (digitValues[i][digitNum] & (1 << segmentNum)) {
                 _shiftRegisterMap[digitPins_[digitNum]] = 0;
             }
         }

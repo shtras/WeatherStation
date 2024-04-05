@@ -10,6 +10,7 @@ pico_sdk_init()
 add_executable(weather_station
         main.cpp
         MultiDisplay.cpp
+        NewMultiDisplay.cpp
         embedded-i2c-scd4x/scd4x_i2c.cpp
         embedded-i2c-scd4x/sensirion_common.c
         embedded-i2c-scd4x/sensirion_i2c_hal.c

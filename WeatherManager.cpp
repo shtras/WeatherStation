@@ -43,10 +43,10 @@ void WeatherManager::display(MultiDisplay& md)
     const Sensor::Measurement& measurement = measurements_[displayedSensor_];
     md.setNumber(0, measurement.CO2);
     md.setNumberF(1, measurement.Temperature, 2);
-    uint8_t segs[4];
-    md.getSegments(1, segs);
-    segs[3] = 0b01011000;
-    md.setSegments(1, segs);
+    //uint8_t segs[4];
+    //md.getSegments(1, segs);
+    //segs[3] = 0b01011000;
+    md.setSegment(1, 3, 0b01011000);
     md.setNumberF(2, measurement.Humidity, 2);
 }
 

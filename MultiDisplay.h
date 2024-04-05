@@ -39,7 +39,7 @@ private:
     std::array<uint8_t, 4> digitPins_;
     std::array<uint8_t, 8> segmentPins_;
 
-    std::vector<std::array<uint8_t, 4>> digitCodes;
+    std::vector<std::array<uint8_t, 4>> digitValues;
 
     std::vector<std::array<uint8_t, 16>> shiftRegisterData_;
 
