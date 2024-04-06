@@ -17,8 +17,10 @@ public:
     explicit WeatherManager(int dhtPin);
     uint64_t process();
 
-    void display(MultiDisplay& md);
     void switchDisplay();
+    int CO2();
+    float temperature();
+    float humidity();
 
 private:
     std::vector<std::unique_ptr<Sensor>> sensors_;
