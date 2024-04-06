@@ -1,6 +1,6 @@
 #include "WeatherManager.h"
 //#include "MultiDisplay.h"
-#include "NewMultiDisplay.h"
+#include "MultiDisplay.h"
 #include "Button.h"
 #include "ino_compat.h"
 
@@ -27,18 +27,27 @@ void foo()
     int iters = 0;
     uint64_t lastFps = millis();
 
-    std::array<weather_station::Button, 3> buttons = {
-        weather_station::Button{
-            7,
-            [&weather] {
-                static int i = 0;
-                weather.switchDisplay();
-                std::cout << "Button 1\n";
-            }
-        },
-        weather_station::Button{8, [] { std::cout << "Button 2\n"; }},
-        weather_station::Button{9, [] { std::cout << "Button 3\n"; }}
-    };
+    std::array<weather_station::Button, 3> buttons =
+        {weather_station::Button{
+             7,
+             [&weather, &md] {
+                 static int i = 0;
+                 weather.switchDisplay();
+                 std::cout << "Button 1\n";
+                 md.switchMode();
+             }
+         },
+         weather_station::Button{
+             8,
+             [&md] {
+                 std::cout << "Button 2\n";
+                 md.incDelay();
+             }
+         },
+         weather_station::Button{9, [&md] {
+                                     std::cout << "Button 3\n";
+                                     md.decDelay();
+                                 }}};
 
     for (;;) {
         ++iters;

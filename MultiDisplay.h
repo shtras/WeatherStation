@@ -1,51 +1,65 @@
 #pragma once
 
-#include <vector>
 #include <array>
-#include <stdint.h>
+#include <vector>
+#include <cstdint>
+
+namespace weather_station
+{
 
 class MultiDisplay
 {
 public:
     using Pin = uint8_t;
-    MultiDisplay(Pin clockPin, Pin latchPin, const std::vector<Pin>& dataPins,
-        std::array<uint8_t, 4>&& digitPins, std::array<uint8_t, 8>&& segmentPins);
-
-    void begin();
-
+    enum class Mode { Segment, Digit };
+    MultiDisplay(
+        Pin clock, Pin latch, const std::vector<Pin>& data, std::array<uint8_t, 4>&& digitPins,
+        std::array<uint8_t, 8>&& segmentPins
+    );
+    void setNumber(int idx, int32_t num, int8_t dotPos = -1, bool hex = false);
+    void setNumberF(int idx, float num, int8_t decPlaces);
+    void setSegment(int idx, int digit, uint8_t segments);
     void refreshDisplay();
 
-    void setBrightness(int brightness);
-
-    void setNumber(int idx, int32_t numToShow, int8_t decPlaces = -1, bool hex = 0);
-    void setNumberF(int idx, float numToShow, int8_t decPlaces = -1, bool hex = 0);
-
-    void setSegments(int idx, const uint8_t segs[]);
-    void getSegments(int idx, uint8_t segs[]);
-    void setChars(const char str[]);
-    void blank(void);
+    void incDelay()
+    {
+        switchDelay_ += 400;
+        setNumber(3, switchDelay_/40);
+    }
+    void decDelay()
+    {
+        switchDelay_ -= 400;
+        setNumber(3, switchDelay_/40);
+    }
+    void switchMode()
+    {
+        if (mode_ == Mode::Segment) {
+            mode_ = Mode::Digit;
+            setNumber(3, 1);
+        } else {
+            mode_ = Mode::Segment;
+            setNumber(3, 2);
+        }
+        displayedElementIdx_ = 0;
+    }
 
 private:
-    void segmentOn(uint8_t segmentNum);
-    void segmentOff(uint8_t segmentNum);
-
     void pushToRegisters();
-
-    std::vector<Pin> dataPins_;
-    int numDisplays_ = 1;
-    Pin clockPin_;
-    Pin latchPin_;
+    void setSegments(int idx, const std::array<uint8_t, 4>& numbers, int dotPos = -1);
 
     std::array<uint8_t, 4> digitPins_;
     std::array<uint8_t, 8> segmentPins_;
+    const std::vector<Pin> dataPins_;
+    const Pin latch_;
+    const Pin clock_;
 
-    std::vector<std::array<uint8_t, 4>> digitValues;
+    std::vector<std::array<uint8_t, 4>> activeSegments_;
+    std::vector<uint16_t> registerValues_;
 
-    std::vector<std::array<uint8_t, 16>> shiftRegisterData_;
-
-    uint8_t prevUpdateIdx = 0;   // The previously updated segment or digit
-    uint32_t prevUpdateTime = 0; // The time (millis()) when the display was last updated
-    int16_t ledOnTime = 200;       // The time (us) to wait with LEDs on
-    int16_t waitOffTime = 0;     // The time (us) to wait with LEDs off
-    bool waitOffActive = false;  // Whether  the program is waiting with LEDs off
+    int displayedElementIdx_ = 0;
+    uint64_t lastElementSwitch_ = 0;
+    int switchDelay_ = 800;
+    Mode mode_ = Mode::Segment;
 };
+
+} // namespace weather_station

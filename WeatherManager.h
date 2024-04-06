@@ -3,7 +3,7 @@
 #include "dht_nonblocking.h"
 #include "SCD.h"
 
-#include "NewMultiDisplay.h"
+#include "MultiDisplay.h"
 
 #include <vector>
 #include <array>
