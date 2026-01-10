@@ -9,11 +9,9 @@
 namespace
 {
 
-constexpr int32_t powersOf10[] = {1,      10,      100,      1000,      10000,
-                                  100000, 1000000, 10000000, 100000000, 1000000000};
+constexpr int32_t powersOf10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
-constexpr int32_t powersOf16[] = {0x1,     0x10,     0x100,     0x1000,
-                                  0x10000, 0x100000, 0x1000000, 0x10000000};
+constexpr int32_t powersOf16[] = {0x1, 0x10, 0x100, 0x1000, 0x10000, 0x100000, 0x1000000, 0x10000000};
 
 std::map<uint8_t, uint8_t> digitSegments = {
     //     GFEDCBA  Segments      7-segment map:
@@ -164,6 +162,13 @@ void MultiDisplay::setSegment(int idx, int digit, uint8_t segments)
 void MultiDisplay::refreshDisplay()
 {
     auto now = time_us_64();
+    if (now - lastElementSwitch_ > switchDelay_ - idleDelay_) {
+        for (int i = 0; i < registerValues_.size(); ++i) {
+            auto& registerValues = registerValues_[i];
+            registerValues = 0;
+        }
+        pushToRegisters();
+    }
     if (now - lastElementSwitch_ > switchDelay_) {
         lastElementSwitch_ = now;
 

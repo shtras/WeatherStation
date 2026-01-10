@@ -2,6 +2,9 @@
 //#include "MultiDisplay.h"
 #include "MultiDisplay.h"
 #include "Button.h"
+#include "Comm.h"
+//#include "TCP.h"
+#include "MQTT.h"
 #include "ino_compat.h"
 
 #include <pico/stdlib.h>
@@ -22,36 +25,26 @@ void displayThread()
     md.setNumber(1, 2000);
     md.setNumber(2, 3000);
     md.setNumber(3, 4000);
-    int received = 0;
-    std::array<uint32_t, 4> values;
+    weather_station::Receiver receiver;
     auto last = millis();
     for (;;) {
         md.refreshDisplay();
         auto now = millis();
-        if (now - last > 100) {
-            bool res = multicore_fifo_rvalid();
-            if (res) {
-                values[received] = multicore_fifo_pop_blocking();
-                ++received;
-                if (received == 4) {
-                    md.setNumber(0, values[0]);
-                    union {
-                        float f;
-                        uint32_t ui;
-                    } temp, hum, obt;
-                    temp.ui = values[1];
-                    md.setNumberF(1, temp.f, 2);
-                    md.setSegment(1, 3, 0b01011000);
-                    hum.ui = values[2];
-                    md.setNumberF(2, hum.f, 2);
-                    obt.ui = values[3];
-                    md.setNumberF(3, obt.f, 2);
-                    md.setSegment(3, 3, 0b01011000);
-
-                    received = 0;
-                }
-            }
-            last = now;
+        auto msg = receiver.process();
+        if (!msg) {
+            continue;
+        }
+        if (msg->type == weather_station::Message::Type::WeatherInfo) {
+            md.setNumber(0, msg->data[0]);
+            md.setNumberF(1, reinterpret_cast<float&>(msg->data[1]), 2);
+            md.setSegment(1, 3, 0b01011000);
+            md.setNumberF(2, reinterpret_cast<float&>(msg->data[2]), 2);
+            md.setNumberF(3, reinterpret_cast<float&>(msg->data[3]), 2);
+            md.setSegment(3, 3, 0b01011000);
+        } else if (msg->type == weather_station::Message::Type::IncDelay) {
+            md.incDelay();
+        } else if (msg->type == weather_station::Message::Type::DecDelay) {
+            md.decDelay();
         }
     }
 }
@@ -81,28 +74,46 @@ void processingThread()
     sleep_ms(500);
     uint64_t lastFps = millis();
     uint64_t lastTemp = 0;
+    //weather_station::TCPTest tcp;
+    weather_station::MQTT mqtt;
+
+    mqtt.Connect();
+
+    //for (;;);
 
     std::array<weather_station::Button, 3> buttons = {
         weather_station::Button{
-            7,
+            17,
             [&weather] {
                 static int i = 0;
-                weather.switchDisplay();
+                //weather.switchDisplay();
                 std::cout << "Button 1\n";
             }
         },
-        weather_station::Button{8, [] { std::cout << "Button 2\n"; }},
-        weather_station::Button{9, [] { std::cout << "Button 3\n"; }}
+        weather_station::Button{
+            18,
+            [] {
+                std::cout << "Button 2\n";
+                multicore_fifo_push_blocking(static_cast<uint32_t>(weather_station::Message::Type::IncDelay));
+            }
+        },
+        weather_station::Button{20, [] {
+                                    std::cout << "Button 3\n";
+                                    multicore_fifo_push_blocking(
+                                        static_cast<uint32_t>(weather_station::Message::Type::DecDelay)
+                                    );
+                                }}
     };
     uint64_t lastReady = 0;
     float onboardTemp = 0;
+    uint64_t lastTcpReport = millis();
 
     for (;;) {
         auto now = millis();
         for (auto& btn : buttons) {
             btn.Process();
         }
-        if (now - lastSync > 500) {
+        if (now - lastSync > 2000) {
             auto co2 = weather.CO2();
             union {
                 float f;
@@ -111,6 +122,7 @@ void processingThread()
             temp.f = weather.temperature();
             hum.f = weather.humidity();
             onboardT.f = onboardTemp;
+            multicore_fifo_push_blocking(static_cast<uint32_t>(weather_station::Message::Type::WeatherInfo));
             multicore_fifo_push_blocking(co2);
             multicore_fifo_push_blocking(temp.ui);
             multicore_fifo_push_blocking(hum.ui);
@@ -124,13 +136,18 @@ void processingThread()
         }
 
         lastReady = weather.process();
+
+        if (now - lastTcpReport > 60000) {
+            lastTcpReport = now;
+            mqtt.ReportWeather(weather.CO2(), weather.temperature(), weather.humidity());
+        }
     }
 }
 
 int main()
 {
     stdio_init_all();
-    sleep_ms(1000);
+    sleep_ms(2000);
     std::cout << "Start!\n";
     multicore_launch_core1(displayThread);
     processingThread();

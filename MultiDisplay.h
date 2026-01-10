@@ -23,13 +23,17 @@ public:
 
     void incDelay()
     {
-        switchDelay_ += 400;
-        setNumber(3, switchDelay_/40);
+        idleDelay_ += 50;
+        if (idleDelay_ >= switchDelay_) {
+            idleDelay_ = switchDelay_ - 50;
+        }
     }
     void decDelay()
     {
-        switchDelay_ -= 400;
-        setNumber(3, switchDelay_/40);
+        idleDelay_ -= 50;
+        if (idleDelay_ < 0) {
+            idleDelay_ = 0;
+        }
     }
     void switchMode()
     {
@@ -59,6 +63,7 @@ private:
     int displayedElementIdx_ = 0;
     uint64_t lastElementSwitch_ = 0;
     int switchDelay_ = 800;
+    int idleDelay_ = 400;
     Mode mode_ = Mode::Segment;
 };
 

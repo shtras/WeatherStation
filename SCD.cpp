@@ -29,8 +29,7 @@ SCD::SCD()
     uint16_t serial_0;
     uint16_t serial_1;
     uint16_t serial_2;
-    if (checkError(scd4x_get_serial_number(&serial_0, &serial_1, &serial_2),
-            "scd4x_get_serial_number") == 0) {
+    if (checkError(scd4x_get_serial_number(&serial_0, &serial_1, &serial_2), "scd4x_get_serial_number") == 0) {
         printf("serial: 0x%04x%04x%04x\n", serial_0, serial_1, serial_2);
     }
 
@@ -75,8 +74,7 @@ bool SCD::process()
 
     int32_t temperature = 0;
     int32_t humidity = 0;
-    if (checkError(scd4x_read_measurement(&measurement_.CO2, &temperature, &humidity),
-            "scd4x_read_measurement")) {
+    if (checkError(scd4x_read_measurement(&measurement_.CO2, &temperature, &humidity), "scd4x_read_measurement")) {
         return false;
     }
     if (measurement_.CO2 == 0) {
