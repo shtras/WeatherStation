@@ -106,13 +106,14 @@ void processingThread()
     };
     uint64_t lastReady = 0;
     float onboardTemp = 0;
-    uint64_t lastTcpReport = millis();
-
+    uint64_t lastWeatherReport = 0;
     for (;;) {
         auto now = millis();
         for (auto& btn : buttons) {
             btn.Process();
         }
+        lastReady = weather.process();
+
         if (now - lastSync > 2000) {
             auto co2 = weather.CO2();
             union {
@@ -135,10 +136,10 @@ void processingThread()
             lastTemp = now;
         }
 
-        lastReady = weather.process();
+        bool haveData = lastReady != 0;
 
-        if (now - lastTcpReport > 60000) {
-            lastTcpReport = now;
+        if (haveData && (now - lastWeatherReport > 60000 * 5 || lastWeatherReport == 0)) {
+            lastWeatherReport = now;
             mqtt.ReportWeather(weather.CO2(), weather.temperature(), weather.humidity());
         }
     }

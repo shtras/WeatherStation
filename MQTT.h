@@ -65,24 +65,20 @@ private:
     enum class ReportingState
     {
         Idle,
+        Pending,
         ReportingCO2,
         ReportingTemperature,
         ReportingHumidity
     };
     ReportingState reportingState_ = ReportingState::Idle;
 
-    mqtt_client_t* mqtt_client_inst = nullptr;
-    struct mqtt_connect_client_info_t mqtt_client_info;
+    mqtt_client_t* mqttClient_ = nullptr;
+    struct mqtt_connect_client_info_t mqttClientInfo_;
     std::string clientId_;
-    // char data[MQTT_OUTPUT_RINGBUF_SIZE];
-    char mqttTopic[128];
-    uint32_t len = 0;
-    ip_addr_t mqtt_server_address;
-    bool connect_done = false;
-    int subscribe_count = 0;
-    bool stop_client = false;
+    ip_addr_t mqttServer_;
+    bool connected_ = false;
 
-    int co2_ = 0;;
+    int co2_ = 0;
     float temp_ = 0;
     float hum_ = 0;
 };

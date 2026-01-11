@@ -15,6 +15,7 @@ WeatherManager::WeatherManager(int dhtPin)
 
     measurements_.resize(sensors_.size());
     lastMeasurement_.resize(sensors_.size());
+    std::fill(lastMeasurement_.begin(), lastMeasurement_.end(), 0);
 }
 
 uint64_t WeatherManager::process()
