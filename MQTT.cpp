@@ -46,16 +46,23 @@ MQTT::~MQTT()
 
 bool MQTT::Connect()
 {
+    // allow the firmware/state machine a short moment after enabling STA mode
+    sleep_ms(2000);
+
     int connectCount = 0;
-    while (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
-        std::cerr << "failed to connect.\n";
-        connectCount++;
-        if (connectCount >= 3) {
-            panic("Failed to connect to WiFi");
+    int rc = 0;
+    do {
+        rc = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
+        if (rc != 0) {
+            std::cerr << "failed to connect (code " << rc << ").\n";
+            connectCount++;
+            if (connectCount >= 3) {
+                panic("Failed to connect to WiFi");
+            }
+            std::cout << "Retrying in 5 seconds...\n";
+            sleep_ms(5000);
         }
-        std::cout << "Retrying in 5 seconds...\n";
-        sleep_ms(5000);
-    }
+    } while (rc != 0);
     std::cout << "Connected.\n";
 
     cyw43_arch_lwip_begin();
@@ -115,6 +122,7 @@ void MQTT::onConnection(mqtt_client_t* client, mqtt_connection_status_t status)
             panic("Failed to connect to mqtt server");
         }
     } else {
+        std::cout << "MQTT connection failed with status: " << status << "\n";
         panic("Unexpected status");
     }
 }
@@ -186,10 +194,12 @@ void MQTT::reportCO2()
     std::cout << "Reporting CO2: " << co2_str << "\n";
     reportingState_ = ReportingState::ReportingCO2;
 
+    cyw43_arch_lwip_begin();
     auto err = mqtt_publish(
         mqttClient_, "home/weather_station/co2", co2_str.c_str(), co2_str.size(), 1, 0,
         MQTT::mqttPublishRequestCallback, this
     );
+    cyw43_arch_lwip_end();
     if (err != ERR_OK) {
         std::cerr << "Failed to publish CO2: " << err << "\n";
         reportingState_ = ReportingState::Idle;
@@ -205,10 +215,12 @@ void MQTT::reportTemperature()
     std::cout << "Reporting Temperature: " << temp_str << "\n";
     reportingState_ = ReportingState::ReportingTemperature;
 
+    cyw43_arch_lwip_begin();
     auto err = mqtt_publish(
         mqttClient_, "home/weather_station/temperature", temp_str.c_str(), temp_str.size(), 1, 0,
         MQTT::mqttPublishRequestCallback, this
     );
+    cyw43_arch_lwip_end();
     if (err != ERR_OK) {
         std::cerr << "Failed to publish Temperature: " << err << "\n";
         reportingState_ = ReportingState::Idle;
@@ -224,10 +236,12 @@ void MQTT::reportHumidity()
     std::cout << "Reporting Humidity: " << hum_str << "\n";
     reportingState_ = ReportingState::ReportingHumidity;
 
+    cyw43_arch_lwip_begin();
     auto err = mqtt_publish(
         mqttClient_, "home/weather_station/humidity", hum_str.c_str(), hum_str.size(), 1, 0,
         MQTT::mqttPublishRequestCallback, this
     );
+    cyw43_arch_lwip_end();
     if (err != ERR_OK) {
         std::cerr << "Failed to publish Humidity: " << err << "\n";
         reportingState_ = ReportingState::Idle;
